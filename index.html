@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style type="text/css">
+    .logo
+    {
+        position: absolute;
+        top: 0%;
+        left: 50%;
+        margin-left: -256px;
+        width: 512px;
+        height: 512px;
+        background-image: url(img/logo-stroke-BW.png);
+    }
+    
+    @media only screen and (-moz-min-device-pixel-ratio: 1.5), 
+    only screen and (-o-min-device-pixel-ratio: 3/2), 
+    only screen and (-webkit-min-device-pixel-ratio: 1.5), 
+    only screen and (min-devicepixel-ratio: 1.5), 
+    only screen and (min-resolution: 1.5dppx) 
+    {
+        .logo
+        {
+            background-image: url(img/logo-stroke-BW@2x.png);
+            background-size: 512px 512px;
+        }
+    }
+    
+    </style>
+</head>
+<body>
+    <div class="logo"/>
+</body>
+</html>
