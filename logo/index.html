@@ -2,6 +2,8 @@
 <html>
 
 <head>
+    <title>Endless Paper Logo</title>
+
     <style type="text/css">
     .params
     {
@@ -94,8 +96,6 @@ function draw()
     }
 
     var unit = 100;
-
-    //var margin = 10; //@conf 0 -> 50
 
     var max = unit + margin,
         min = -max; 
@@ -194,9 +194,6 @@ function draw()
         return [pointOnCircleAtAngle(C, R, angles[0]), pointOnCircleAtAngle(C, R, angles[1])];
     }
     
-    
-
-    //var gridOpacity = 0.3; //@conf 0 -> 1
 
     ctx.save();
     
@@ -214,19 +211,16 @@ function draw()
     drawHLine(0);
     drawVLine(0);
 
-    //var circleSize = 40; //@conf 10 -> 50
 
     var ecenter = vec2(-circleSize, -circleSize);
     var pcenter = vec2( circleSize,  circleSize);
     var crossWidth = 2;
 
-    //var lineWidth = circleSize / 2, //@conf 2 -> 25
     var halfWidth = lineWidth / 2;  
 
     drawVLine(-halfWidth);
     drawVLine( halfWidth);
 
-    //var eBarRatio = 3; //@conf 2 -> 5
 
     var innerCircleRadius = circleSize - halfWidth,
         outerCircleRadius = circleSize + halfWidth,
@@ -242,9 +236,7 @@ function draw()
     drawCircle(ecenter, in3rdCircleRadius);
 
 
-    //var gapWidth = halfWidth, //@conf 0 -> 30 
     var gapLoc   = halfWidth + gapWidth;
-
 
     ctx.strokeStyle = "rgba(180, 180, 180, " + gridOpacity + ")";
 
@@ -254,8 +246,6 @@ function draw()
     drawHLine( halfWidth);
     drawHLine(-halfWidth);
 
-
-    ctx.strokeStyle = "#98c12c";
     ctx.lineWidth = params.STROKE_WIDTH.value;
 
     ctx.beginPath();
@@ -279,13 +269,13 @@ function draw()
     ctx.arc(pcenter.x, pcenter.y, innerCircleRadius, Math.atan2(iPin.y - pcenter.y, iPin.x - pcenter.x), 1 * Math.PI, false);
     ctx.lineTo(halfWidth, ecenter.y);
 
-    
     var iEx = roundedE ? -gapLoc : ecenter.x;
     
     var iEout = circleSegmentInt(vec2(iEx, -unit), vec2(iEx, unit), ecenter, outerCircleRadius)[1],
         iEin  = circleSegmentInt(vec2(iEx, -unit), vec2(iEx, unit), ecenter, innerCircleRadius)[1];
 
     ctx.arc(ecenter.x, ecenter.y, outerCircleRadius, 0, Math.atan2(iEout.y - ecenter.y, iEout.x - ecenter.x), true);
+    
     if(roundedE)
     {
         ctx.lineTo(iEin.x, iEin.y);
@@ -413,9 +403,6 @@ function round(val)
 
 Object.keys(params).forEach(function(key) 
 {
-    //console.log(key + " : " + params[key]);
-    //<tr><td class="paramLabel">param : </td><td><input value="value"></td></tr>
-    
     var value = params[key].value,
         min = params[key].min,
         max = params[key].max;
@@ -431,7 +418,9 @@ Object.keys(params).forEach(function(key)
     
     var input = document.createElement("input");
     
-    if(typeof(value) === "number")
+    var type = typeof(value); 
+    
+    if(type === "number")
     {
         input.type = "range";
         input.id = key;
@@ -439,7 +428,7 @@ Object.keys(params).forEach(function(key)
         input.max = max;
         input.step = 0.01;
     }
-    else if(typeof(value) === "boolean")
+    else if(type === "boolean")
     {
         input.type = "checkbox";
     }
@@ -454,7 +443,7 @@ Object.keys(params).forEach(function(key)
     
     var txt = document.createElement("input");
     
-    if(typeof(value) === "number")
+    if(type === "number")
     {
         txt.value = round(value);
     }
@@ -473,7 +462,7 @@ Object.keys(params).forEach(function(key)
     
     table.appendChild(tr);
     
-    if(typeof(value) === "number")
+    if(type === "number")
     {
         input.addEventListener("input", function(evt)
         {
@@ -483,7 +472,7 @@ Object.keys(params).forEach(function(key)
             redraw();
         });
     }
-    else if(typeof(value) === "boolean")
+    else if(type === "boolean")
     {
         input.addEventListener("change", function(evt)
         {
@@ -494,7 +483,7 @@ Object.keys(params).forEach(function(key)
         });
     }
     
-    if(typeof(value) === "number")
+    if(type === "number")
     {
         txt.addEventListener("input", function(evt)
         {
@@ -509,7 +498,7 @@ Object.keys(params).forEach(function(key)
             catch(e){console.log(e);}
         });
     }
-    else if(typeof(value) === "boolean")
+    else if(type === "boolean")
     {
         txt.addEventListener("input", function(evt)
         {
@@ -524,8 +513,6 @@ Object.keys(params).forEach(function(key)
             catch(e){console.log(e);}
         });
     }
-    
-    
 });
 
 </script>
