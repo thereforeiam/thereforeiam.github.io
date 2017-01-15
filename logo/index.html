@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style type="text/css">
+    .params
+    {
+        position: absolute;
+        top: 0px;
+        left: 1050px;
+        width: 500px;
+    }
+    
+    .paramLabel
+    {
+        /* text-align: right; actually this time, it is not the right choice :) */ 
+    }
+    
+    .paramString
+    {
+        position: absolute;
+        top: 512px;
+    }
+    </style>
+</head>
+
+<body>
+    <canvas id ="canvas" width="1024" height="1024">    
+    </canvas>
+
+    <div class="params">
+        <table id="paramsTable">
+        </table>
+    </div>
+    
+    <span class="paramString">Parameter string to copy paste : 
+        <textarea rows="16" cols="50"  id="paramString">
+        </textarea>
+    </span>
+    
+</body>
+
+<script type="text/javascript">
+
+var canvas = document.getElementById("canvas");
+var w = canvas.width;
+    
+var ctx = canvas.getContext("2d");
+
+var pxr = window.devicePixelRatio;
+
+if(pxr != 1)
+{
+    canvas.width = w * pxr;
+    canvas.height = w * pxr;
+    canvas.style.width = "" + w + "px";
+    canvas.style.height = "" + w + "px";
+}
+
+function draw()
+{
+    var margin = params.CAM_DISTANCE.value,
+        gridOpacity = params.GRID_OPACITY.value,
+        circleSize = 40,
+        lineWidth = params.LINE_WIDTH.value,
+        gapWidth = params.GAP_WIDTH.value,
+        roundedP = params.ROUNDED_P.value != 0,
+        roundedE = params.ROUNDED_E.value != 0;
+        
+    
+    
+    function log(msg)
+    {
+        console.log(msg)
+    }
+
+    function vec2(x, y)
+    {
+        var res = {};
+        
+        res.x = x;
+        res.y = y;
+        
+        return res;
+    }
+
+    function drawLine(fromX, fromY, toX, toY)
+    {
+        ctx.beginPath();
+         ctx.moveTo(fromX, fromY);
+         ctx.lineTo(toX, toY);
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    var unit = 100;
+
+    //var margin = 10; //@conf 0 -> 50
+
+    var max = unit + margin,
+        min = -max; 
+
+    function drawVLine(atX)
+    {
+        drawLine(atX, min, atX, max);
+    }
+
+    function drawHLine(atY)
+    {
+        drawLine(min, atY, max, atY);
+    }
+
+    function drawCircle(center, radius)
+    {
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+
+    function drawCross(center, width)
+    {
+        drawLine(center.x - width, center.y, center.x + width, center.y);
+        drawLine(center.x, center.y - width, center.x, center.y + width);
+    }
+
+    function dist(A, B)
+    {
+        var ABx = B.x - A.x,
+            ABx2 = ABx * ABx,
+            ABy = B.y - A.y,
+            ABy2 = ABy * ABy;
+        
+        return Math.sqrt(ABx2 + ABy2);
+    }
+
+    /**
+     * A: vec2  -> first point on AB segment
+     * B: vec2  -> second point on AB segment
+     *
+     * C: vec2  -> circle center
+     * R: float -> circle radius
+     *
+     * return [vec2] of len 2 if AB & CR intersects, [vec2] of len 1 if AB is tangent to CR, [] otherwise
+     */
+    function circleSegmentInt(A, B, C, R)
+    {
+        var LAB = dist(A, B);
+
+        var Dx = (B.x - A.x)/LAB,
+            Dy = (B.y - A.y)/LAB;
+        
+        var t = Dx * (C.x - A.x) + Dy * (C.y - A.y);    
+        
+        var Ex = t * Dx + A.x,
+            Ey = t * Dy + A.y;
+        
+        var LEC = dist(C, vec2(Ex, Ey));
+        
+        
+        if(LEC < R) // test if the line intersects the circle
+        {
+            var dt = Math.sqrt(R * R - LEC * LEC)
+        
+            var p1 = vec2((t - dt) * Dx + A.x, (t - dt) * Dy + A.y),
+                p2 = vec2((t + dt) * Dx + A.x, (t + dt) * Dy + A.y);
+            
+            return [p1, p2];
+        }
+        else if( LEC == R ) // else test if the line is tangent to circle
+        {
+            return [vec2(Ex, Ey)];
+        }// line doesn't touch circle
+        else
+            return [];
+    }
+     
+    function tangentAngles(C, R, P)
+    {
+        var delta = Math.acos(R / dist(C, P)),
+            centerAngle = Math.atan2(P.y - C.y, P.x - C.x);
+        
+        return [centerAngle - delta, centerAngle + delta];
+    }
+
+    function pointOnCircleAtAngle(C, R, angle)
+    {
+        return vec2(C.x + Math.cos(angle) * R, C.y + Math.sin(angle) * R);
+    }
+
+    function tangentPoints(C, R, P)
+    {
+        var angles = tangentAngles(C, R, P);
+        
+        return [pointOnCircleAtAngle(C, R, angles[0]), pointOnCircleAtAngle(C, R, angles[1])];
+    }
+    
+    
+
+    //var gridOpacity = 0.3; //@conf 0 -> 1
+
+    ctx.save();
+    
+    var scale = w / max / 2 * pxr;
+    ctx.lineWidth = 1 / scale;
+    ctx.translate(w / 2 * pxr, w / 2 * pxr);
+    ctx.scale(scale, scale);
+    ctx.scale(1, -1);
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(min, min, max * 2, max * 2);
+    
+    ctx.strokeStyle = "rgba(0, 0, 0, " + gridOpacity + ")";
+
+    drawHLine(0);
+    drawVLine(0);
+
+    //var circleSize = 40; //@conf 10 -> 50
+
+    var ecenter = vec2(-circleSize, -circleSize);
+    var pcenter = vec2( circleSize,  circleSize);
+    var crossWidth = 2;
+
+    //var lineWidth = circleSize / 2, //@conf 2 -> 25
+    var halfWidth = lineWidth / 2;  
+
+    drawVLine(-halfWidth);
+    drawVLine( halfWidth);
+
+    //var eBarRatio = 3; //@conf 2 -> 5
+
+    var innerCircleRadius = circleSize - halfWidth,
+        outerCircleRadius = circleSize + halfWidth,
+        in3rdCircleRadius = halfWidth;
+
+    drawCross(pcenter, crossWidth);
+    drawCircle(pcenter, innerCircleRadius);
+    drawCircle(pcenter, outerCircleRadius);
+
+    drawCross(ecenter, crossWidth);
+    drawCircle(ecenter, innerCircleRadius);
+    drawCircle(ecenter, outerCircleRadius);
+    drawCircle(ecenter, in3rdCircleRadius);
+
+
+    //var gapWidth = halfWidth, //@conf 0 -> 30 
+    var gapLoc   = halfWidth + gapWidth;
+
+
+    ctx.strokeStyle = "rgba(180, 180, 180, " + gridOpacity + ")";
+
+    drawVLine( gapLoc);
+    drawVLine(-gapLoc);
+
+    drawHLine( halfWidth);
+    drawHLine(-halfWidth);
+
+
+    ctx.strokeStyle = "#98c12c";
+    ctx.lineWidth = params.STROKE_WIDTH.value;
+
+    ctx.beginPath();
+    ctx.moveTo(-halfWidth, ecenter.y);
+    ctx.lineTo(-halfWidth, pcenter.y);
+
+    var iPx = roundedP ? gapLoc : pcenter.x;
+    
+    var iPout = circleSegmentInt(vec2(iPx, -unit), vec2(iPx, unit), pcenter, outerCircleRadius)[0],
+        iPin  = circleSegmentInt(vec2(iPx, -unit), vec2(iPx, unit), pcenter, innerCircleRadius)[0];
+
+    ctx.arc(pcenter.x, pcenter.y, outerCircleRadius, Math.PI, Math.atan2(iPout.y - pcenter.y, iPout.x - pcenter.x), true);
+    
+    if(!roundedP)
+    {
+        ctx.lineTo(gapLoc, iPout.y);
+        ctx.lineTo(gapLoc, iPin.y); 
+    }
+    
+    ctx.lineTo(iPin.x, iPin.y);
+    ctx.arc(pcenter.x, pcenter.y, innerCircleRadius, Math.atan2(iPin.y - pcenter.y, iPin.x - pcenter.x), 1 * Math.PI, false);
+    ctx.lineTo(halfWidth, ecenter.y);
+
+    
+    var iEx = roundedE ? -gapLoc : ecenter.x;
+    
+    var iEout = circleSegmentInt(vec2(iEx, -unit), vec2(iEx, unit), ecenter, outerCircleRadius)[1],
+        iEin  = circleSegmentInt(vec2(iEx, -unit), vec2(iEx, unit), ecenter, innerCircleRadius)[1];
+
+    ctx.arc(ecenter.x, ecenter.y, outerCircleRadius, 0, Math.atan2(iEout.y - ecenter.y, iEout.x - ecenter.x), true);
+    if(roundedE)
+    {
+        ctx.lineTo(iEin.x, iEin.y);
+    }
+    else
+    {
+        ctx.lineTo(-gapLoc, iEout.y);
+        ctx.lineTo(-gapLoc, iEin.y);
+    }
+
+    var eb = vec2(roundedE ? iEin.x : -gapLoc, iEin.y);
+
+    var ps = tangentPoints(ecenter, in3rdCircleRadius, eb);
+    ctx.lineTo(ps[0].x, ps[0].y);
+    var ta = tangentAngles(ecenter, in3rdCircleRadius, eb)[0];
+    ctx.arc(ecenter.x, ecenter.y, in3rdCircleRadius, ta, ta + Math.PI, true);
+    var pa = pointOnCircleAtAngle(ecenter, in3rdCircleRadius, ta + Math.PI);
+
+    var L = dist(eb, pa); 
+
+    var ppx = (ps[0].x - eb.x) / L, 
+        ppy = (ps[0].y - eb.y) / L;
+
+    var pa2 = vec2(ppx * -unit + pa.x, ppy * -unit + pa.y)
+
+    var iEinp =  circleSegmentInt(pa, pa2, ecenter, innerCircleRadius)[1]
+
+    ctx.lineTo(iEinp.x, iEinp.y);
+    ctx.arc(ecenter.x, ecenter.y, innerCircleRadius, Math.atan2(iEinp.y - ecenter.y, iEinp.x - ecenter.x), 0, false);
+
+    ctx.fillStyle = "rgba(" + Math.round(params.FILL_RED.value) + ", " + Math.round(params.FILL_GREEN.value) + ", " 
+                  + Math.round(params.FILL_BLUE.value) + ", " + params.FILL_OPACITY.value + ")";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(" + Math.round(params.STROKE_RED.value) + ", " + Math.round(params.STROKE_GREEN.value) + ", " 
+                    + Math.round(params.STROKE_BLUE.value) + ", " + params.STROKE_OPACITY.value + ")";
+    ctx.stroke();
+    ctx.restore();
+}
+
+var DEFAULTS = 
+{
+    LINE_WIDTH : 16,
+    GAP_WIDTH : 8,
+    CAM_DISTANCE : 100,
+    
+    ROUNDED_E : false,
+    ROUNDED_P : false,
+    
+    STROKE_WIDTH : 1,
+    GRID_OPACITY : 0,
+    
+    STROKE_RED   : 152,
+    STROKE_GREEN : 193,
+    STROKE_BLUE  : 44,
+    STROKE_OPACITY : 1,
+    
+    FILL_RED   : 152,
+    FILL_GREEN : 193,
+    FILL_BLUE  : 44,
+    FILL_OPACITY : 0
+};
+    
+    
+var params = 
+{
+    LINE_WIDTH : {min: 2, max: 39.99},
+    GAP_WIDTH : {min: 0.01, max: 30},
+    CAM_DISTANCE : {min: 0, max: 800},
+    
+    ROUNDED_E : {},
+    ROUNDED_P : {},
+    
+    STROKE_WIDTH : {min: 0.1, max: 5},
+    GRID_OPACITY : {min:0, max: 1},
+    
+    STROKE_RED   : {min:0, max: 255},
+    STROKE_GREEN : {min:0, max: 255},
+    STROKE_BLUE  : {min:0, max: 255},
+    STROKE_OPACITY : {min:0, max: 1},
+    
+    FILL_RED   : {min:0, max: 255},
+    FILL_GREEN : {min:0, max: 255},
+    FILL_BLUE  : {min:0, max: 255},
+    FILL_OPACITY : {min:0, max: 1}
+};
+
+Object.keys(DEFAULTS).forEach(function(key)
+{
+    params[key].value = DEFAULTS[key];
+});
+
+function redraw()
+{
+    draw();
+    
+    var str = "";
+    
+    Object.keys(DEFAULTS).forEach(function(key)
+    {
+        if(DEFAULTS[key] != params[key].value)
+        {
+            str += key + " = " + params[key].value + "\n";
+        }
+    });
+    
+    document.getElementById("paramString").textContent = str;
+}
+
+redraw();
+
+function lerp(val, min, max)
+{
+    return min + val * (max - min); 
+}
+
+function clamp(val, min, max)
+{
+    return Math.min(Math.max(val, min), max);
+}
+
+function round(val)
+{
+    return Math.round(val * 100) / 100;
+}
+
+Object.keys(params).forEach(function(key) 
+{
+    //console.log(key + " : " + params[key]);
+    //<tr><td class="paramLabel">param : </td><td><input value="value"></td></tr>
+    
+    var value = params[key].value,
+        min = params[key].min,
+        max = params[key].max;
+    
+    var table = document.getElementById("paramsTable");
+    var tr = document.createElement("tr");
+    
+    var tdParam = document.createElement("td");
+    tdParam.className = "paramLabel";
+    tdParam.textContent = key + " : ";
+    
+    var tdValue = document.createElement("td");
+    
+    var input = document.createElement("input");
+    
+    if(typeof(value) === "number")
+    {
+        input.type = "range";
+        input.id = key;
+        input.min = min;
+        input.max = max;
+        input.step = 0.01;
+    }
+    else if(typeof(value) === "boolean")
+    {
+        input.type = "checkbox";
+    }
+    
+    
+    input.value = value;
+    
+    tdValue.appendChild(input);
+    
+    
+    var tdTxt = document.createElement("td");
+    
+    var txt = document.createElement("input");
+    
+    if(typeof(value) === "number")
+    {
+        txt.value = round(value);
+    }
+    else
+    {
+        txt.value = value;
+    }
+    
+    
+    tdTxt.appendChild(txt);
+    
+    
+    tr.appendChild(tdParam);
+    tr.appendChild(tdValue);
+    tr.appendChild(tdTxt);
+    
+    table.appendChild(tr);
+    
+    if(typeof(value) === "number")
+    {
+        input.addEventListener("input", function(evt)
+        {
+            params[key].value = clamp(input.value, min, max);
+            txt.value = round(params[key].value);
+     
+            redraw();
+        });
+    }
+    else if(typeof(value) === "boolean")
+    {
+        input.addEventListener("change", function(evt)
+        {
+            params[key].value = input.checked;
+            txt.value = "" + params[key].value;
+     
+            redraw();
+        });
+    }
+    
+    if(typeof(value) === "number")
+    {
+        txt.addEventListener("input", function(evt)
+        {
+            try
+            {
+                var parsed = round(parseFloat(txt.value));
+                params[key].value = clamp(parsed, min, max);
+                input.value = parsed;
+         
+                redraw();
+            }
+            catch(e){console.log(e);}
+        });
+    }
+    else if(typeof(value) === "boolean")
+    {
+        txt.addEventListener("input", function(evt)
+        {
+            try
+            {
+                var parsed = txt.value == "true" ? true : false;
+                params[key].value = parsed;
+                input.checked = parsed;
+                
+                redraw();
+            }
+            catch(e){console.log(e);}
+        });
+    }
+    
+    
+});
+
+</script>
+
+</html>
