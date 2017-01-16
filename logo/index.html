@@ -208,6 +208,7 @@ function draw()
     ctx.translate(w / 2 * pxr, w / 2 * pxr);
     ctx.scale(scale, scale);
     ctx.scale(1, -1);
+    ctx.rotate(-1 * Math.PI / 180 * params.ROTATION.value);
 
     ctx.fillStyle = "rgb(" + Math.round(params.BACKGROUND_RED.value) + ", " + Math.round(params.BACKGROUND_GREEN.value) + ", " 
     + Math.round(params.BACKGROUND_BLUE.value) + ")";
@@ -328,6 +329,8 @@ var DEFAULTS =
     GAP_WIDTH : 8,
     CAM_DISTANCE : 100,
     
+    ROTATION : 0,
+    
     ROUNDED_E : false,
     ROUNDED_P : false,
     
@@ -354,7 +357,9 @@ var params =
 {
     LINE_WIDTH : {min: 2, max: 39.99},
     GAP_WIDTH : {min: 0.01, max: 30},
-    CAM_DISTANCE : {min: 0, max: 1500},
+    CAM_DISTANCE : {min: 0, max: 3000},
+    
+    ROTATION : {min: 0, max: 360},
     
     ROUNDED_E : {},
     ROUNDED_P : {},
