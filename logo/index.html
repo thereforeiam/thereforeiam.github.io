@@ -200,6 +200,60 @@ function draw()
         return [pointOnCircleAtAngle(C, R, angles[0]), pointOnCircleAtAngle(C, R, angles[1])];
     }
     
+    function hslToRgb(h, s, l)
+    {
+        var r = 0, 
+            g = 0, 
+            b = 0;
+        
+        if (s == 0) 
+            r = g = b = clamp((l * 255 + 0.5), 0, 255);
+        else 
+        {
+                h = (h - Math.floor(h)) * 6.0;
+            var f = h - Math.floor(h);
+            var p = l * (1.0 - s);
+            var q = l * (1.0 - s * f);
+            var t = l * (1.0 - (s * (1.0 - f)));
+            
+            switch(Math.floor(h)) 
+            {
+                case 0:
+                    r = clamp(l * 255.0 + 0.5, 0, 255);
+                    g = clamp(t * 255.0 + 0.5, 0, 255);
+                    b = clamp(p * 255.0 + 0.5, 0, 255);
+                    break;
+                case 1:
+                    r = clamp(q * 255 + 0.5, 0, 255);
+                    g = clamp(l * 255 + 0.5, 0, 255);
+                    b = clamp(p * 255 + 0.5, 0, 255);
+                    break;
+                case 2:
+                    r = clamp(p * 255 + 0.5, 0, 255);
+                    g = clamp(l * 255 + 0.5, 0, 255);
+                    b = clamp(t * 255 + 0.5, 0, 255);
+                    break;
+                case 3:
+                    r = clamp(p * 255 + 0.5, 0, 255);
+                    g = clamp(q * 255 + 0.5, 0, 255);
+                    b = clamp(l * 255 + 0.5, 0, 255);
+                    break;
+                case 4:
+                    r = clamp(t * 255 + 0.5, 0, 255);
+                    g = clamp(p * 255 + 0.5, 0, 255);
+                    b = clamp(l * 255 + 0.5, 0, 255);
+                    break;
+                case 5:
+                    r = clamp(l * 255 + 0.5, 0, 255);
+                    g = clamp(p * 255 + 0.5, 0, 255);
+                    b = clamp(q * 255 + 0.5, 0, 255);
+                    break;
+            }
+        }
+        
+        return [r, g, b];
+    }
+    
 
     ctx.save();
     
@@ -210,8 +264,9 @@ function draw()
     ctx.scale(1, -1);
     ctx.rotate(-1 * Math.PI / 180 * params.ROTATION.value);
 
-    ctx.fillStyle = "rgb(" + Math.round(params.BACKGROUND_RED.value) + ", " + Math.round(params.BACKGROUND_GREEN.value) + ", " 
-    + Math.round(params.BACKGROUND_BLUE.value) + ")";
+    var bgRGB = hslToRgb(params.BG_HUE.value, params.BG_SATURATION.value, params.BG_BRIGHTNESS.value);
+    
+    ctx.fillStyle = "rgb(" + Math.round(bgRGB[0]) + ", " + Math.round(bgRGB[1]) + ", "  + Math.round(bgRGB[2]) + ")";
     ctx.fillRect(min, min, max * 2, max * 2);
     
     ctx.strokeStyle = "rgba(0, 0, 0, " + gridOpacity + ")";
@@ -347,9 +402,9 @@ var DEFAULTS =
     FILL_BLUE  : 44,
     FILL_OPACITY : 0,
     
-    BACKGROUND_RED: 255,
-    BACKGROUND_GREEN: 255,
-    BACKGROUND_BLUE: 255
+    BG_HUE: 0,
+    BG_SATURATION: 0,
+    BG_BRIGHTNESS: 1
 };
     
     
@@ -377,9 +432,9 @@ var params =
     FILL_BLUE  : {min:0, max: 255},
     FILL_OPACITY : {min:0, max: 1},
     
-    BACKGROUND_RED: {min:0, max: 255},
-    BACKGROUND_GREEN: {min:0, max: 255},
-    BACKGROUND_BLUE: {min:0, max: 255}
+    BG_HUE: {min:0, max: 1},
+    BG_SATURATION: {min:0, max: 1},
+    BG_BRIGHTNESS: {min:0, max: 1}
 };
 
 Object.keys(DEFAULTS).forEach(function(key)
