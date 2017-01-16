@@ -202,6 +202,10 @@ function draw()
     
     function hslToRgb(h, s, l)
     {
+        h /= 360;
+        s /= 100;
+        l /= 100;
+        
         var r = 0, 
             g = 0, 
             b = 0;
@@ -254,6 +258,11 @@ function draw()
         return [r, g, b];
     }
     
+    function colorOfParam(name)
+    {
+        var rgb = hslToRgb(params[name + "_HUE"].value, params[name + "_SATURATION"].value, params[name + "_BRIGHTNESS"].value);
+        return "rgba(" + Math.round(rgb[0]) + ", " + Math.round(rgb[1]) + ", "  + Math.round(rgb[2]) + ", " + (name + "_OPACITY" in params ? params[name + "_OPACITY"].value : 1) +  ")";
+    }
 
     ctx.save();
     
@@ -264,9 +273,7 @@ function draw()
     ctx.scale(1, -1);
     ctx.rotate(-1 * Math.PI / 180 * params.ROTATION.value);
 
-    var bgRGB = hslToRgb(params.BG_HUE.value, params.BG_SATURATION.value, params.BG_BRIGHTNESS.value);
-    
-    ctx.fillStyle = "rgb(" + Math.round(bgRGB[0]) + ", " + Math.round(bgRGB[1]) + ", "  + Math.round(bgRGB[2]) + ")";
+    ctx.fillStyle = colorOfParam("BG");
     ctx.fillRect(min, min, max * 2, max * 2);
     
     ctx.strokeStyle = "rgba(0, 0, 0, " + gridOpacity + ")";
@@ -369,11 +376,9 @@ function draw()
     ctx.lineTo(iEinp.x, iEinp.y);
     ctx.arc(ecenter.x, ecenter.y, innerCircleRadius, Math.atan2(iEinp.y - ecenter.y, iEinp.x - ecenter.x), 0, false);
 
-    ctx.fillStyle = "rgba(" + Math.round(params.FILL_RED.value) + ", " + Math.round(params.FILL_GREEN.value) + ", " 
-                  + Math.round(params.FILL_BLUE.value) + ", " + params.FILL_OPACITY.value + ")";
+    ctx.fillStyle = colorOfParam("FILL");
     ctx.fill();
-    ctx.strokeStyle = "rgba(" + Math.round(params.STROKE_RED.value) + ", " + Math.round(params.STROKE_GREEN.value) + ", " 
-                    + Math.round(params.STROKE_BLUE.value) + ", " + params.STROKE_OPACITY.value + ")";
+    ctx.strokeStyle = colorOfParam("STROKE");
     ctx.stroke();
     ctx.restore();
 }
@@ -392,19 +397,19 @@ var DEFAULTS =
     STROKE_WIDTH : 1,
     GRID_OPACITY : 0.25,
     
-    STROKE_RED   : 152,
-    STROKE_GREEN : 193,
-    STROKE_BLUE  : 44,
-    STROKE_OPACITY : 1,
+    STROKE_HUE        : 77,
+    STROKE_SATURATION : 77,
+    STROKE_BRIGHTNESS : 77,
+    STROKE_OPACITY    : 1,
     
-    FILL_RED   : 152,
-    FILL_GREEN : 193,
-    FILL_BLUE  : 44,
-    FILL_OPACITY : 0,
+    FILL_HUE        : 77,
+    FILL_SATURATION : 77,
+    FILL_BRIGHTNESS : 77,
+    FILL_OPACITY    : 0,
     
     BG_HUE: 0,
     BG_SATURATION: 0,
-    BG_BRIGHTNESS: 1
+    BG_BRIGHTNESS: 100
 };
     
     
@@ -422,19 +427,19 @@ var params =
     STROKE_WIDTH : {min: 0.1, max: 5},
     GRID_OPACITY : {min:0, max: 1},
     
-    STROKE_RED   : {min:0, max: 255},
-    STROKE_GREEN : {min:0, max: 255},
-    STROKE_BLUE  : {min:0, max: 255},
-    STROKE_OPACITY : {min:0, max: 1},
+    STROKE_HUE        : {min:0, max: 360},
+    STROKE_SATURATION : {min:0, max: 100},
+    STROKE_BRIGHTNESS : {min:0, max: 100},
+    STROKE_OPACITY    : {min:0, max: 1},
     
-    FILL_RED   : {min:0, max: 255},
-    FILL_GREEN : {min:0, max: 255},
-    FILL_BLUE  : {min:0, max: 255},
-    FILL_OPACITY : {min:0, max: 1},
+    FILL_HUE        : {min:0, max: 360},
+    FILL_SATURATION : {min:0, max: 100},
+    FILL_BRIGHTNESS : {min:0, max: 100},
+    FILL_OPACITY    : {min:0, max: 1},
     
-    BG_HUE: {min:0, max: 1},
-    BG_SATURATION: {min:0, max: 1},
-    BG_BRIGHTNESS: {min:0, max: 1}
+    BG_HUE: {min:0, max: 360},
+    BG_SATURATION: {min:0, max: 100},
+    BG_BRIGHTNESS: {min:0, max: 100}
 };
 
 Object.keys(DEFAULTS).forEach(function(key)
