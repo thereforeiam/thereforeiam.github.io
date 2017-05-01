@@ -308,13 +308,16 @@ function draw()
 
     var gapLoc   = halfWidth + gapWidth;
 
-    ctx.strokeStyle = "rgba(180, 180, 180, " + gridOpacity + ")";
+    drawHLine( halfWidth);
+    drawHLine(-halfWidth);
+
+
+    ctx.strokeStyle = "rgba(0, 0, 0, " + (gridOpacity * 0.8) + ")";
 
     drawVLine( gapLoc);
     drawVLine(-gapLoc);
 
-    drawHLine( halfWidth);
-    drawHLine(-halfWidth);
+    
 
     ctx.lineWidth = params.STROKE_WIDTH.value;
 
